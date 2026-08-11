@@ -9,7 +9,9 @@ function methodOf(event) {
   return event instanceof Request ? event.method : event.httpMethod;
 }
 function headerOf(event, name) {
-  return event instanceof Request ? event.headers.get(name) : event.headers?.[name.toLowerCase()];
+  const headers = event.headers;
+  if (headers && typeof headers.get === 'function') return headers.get(name);
+  return headers?.[name.toLowerCase()] || headers?.[name];
 }
 function authorized(event) {
   return Boolean(adminKey && headerOf(event, 'x-admin-key') === adminKey);
