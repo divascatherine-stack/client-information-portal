@@ -12,7 +12,7 @@ async function readRecords() {
   return (await store.get('records', { type: 'json' })) || [];
 }
 function response(statusCode, body) {
-  return { statusCode, headers, body: JSON.stringify(body) };
+  return new Response(JSON.stringify(body), { status: statusCode, headers });
 }
 
 export default async (event) => {
