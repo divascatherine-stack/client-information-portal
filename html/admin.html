@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Admin · Client Information</title>
+  <style>
+    :root { --ink:#1d2935; --muted:#687784; --line:#d9e1e6; --brand:#166b68; --bg:#f3f7f7; --danger:#a63d3d; }
+    * { box-sizing:border-box; }
+    body { background:var(--bg); color:var(--ink); font-family:Arial,sans-serif; margin:0; }
+    .wrap { margin:0 auto; max-width:1100px; padding:38px 20px 60px; }
+    .top { align-items:flex-start; display:flex; justify-content:space-between; gap:20px; margin-bottom:28px; }
+    .tag { color:var(--brand); font-size:.75rem; font-weight:700; letter-spacing:.12em; text-transform:uppercase; }
+    h1 { font-size:clamp(2rem,5vw,3rem); letter-spacing:-.04em; margin:10px 0; }
+    p { color:var(--muted); line-height:1.5; margin:0; }
+    .actions { display:flex; flex-wrap:wrap; gap:9px; }
+    .key { border:1px solid var(--line); border-radius:8px; font:inherit; padding:12px; width:220px; }
+    button, .link { background:var(--brand); border:0; border-radius:8px; color:#fff; cursor:pointer; font:inherit; font-weight:700; padding:12px 15px; text-decoration:none; }
+    button:hover, .link:hover { background:#0e514f; }
+    button.danger { background:#fff; border:1px solid #d9aaaa; color:var(--danger); }
+    .notice { background:#fff8e8; border-left:4px solid #d99b35; color:#644d26; font-size:.85rem; line-height:1.5; margin-bottom:22px; padding:13px 15px; }
+    .empty { background:#fff; border:1px dashed #bfcbd1; border-radius:12px; color:var(--muted); padding:45px 20px; text-align:center; }
+    .record { background:#fff; border:1px solid var(--line); border-radius:12px; margin-bottom:14px; overflow:hidden; }
+    .record-head { align-items:center; background:#f7fafa; border-bottom:1px solid var(--line); display:flex; justify-content:space-between; padding:15px 18px; }
+    .record-head strong { font-size:1.05rem; }
+    .record-head time { color:var(--muted); font-size:.8rem; }
+    .details { display:grid; gap:12px 22px; grid-template-columns:repeat(3,1fr); padding:18px; }
+    .field b { color:var(--muted); display:block; font-size:.72rem; letter-spacing:.04em; margin-bottom:4px; text-transform:uppercase; }
+    .field span { overflow-wrap:anywhere; }
+    .field.full { grid-column:1/-1; }
+    @media(max-width:700px) { .top { display:block; } .actions { margin-top:18px; } .details { grid-template-columns:1fr 1fr; } }
+    @media(max-width:430px) { .details { grid-template-columns:1fr; } .field.full { grid-column:auto; } }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="top">
+      <div><div class="tag">Admin dashboard</div><h1>Received client details</h1><p id="count">0 submissions</p></div>
+      <div class="actions"><input class="key" id="adminKey" type="password" placeholder="Admin key"><button id="login">Log in</button><a class="link" href="index.html">Open intake form</a><button id="export">Export JSON</button><button class="danger" id="clear">Clear all</button></div>
+    </div>
+    <div class="notice"><strong>Shared admin portal:</strong> submissions are stored by the server. Enter the admin key above to view them. Use HTTPS and an encrypted database before handling real identity or retirement records.</div>
+    <div id="records"></div>
+  </div>
+  <script>
+    let adminKey = sessionStorage.getItem('adminKey') || '';
+    const recordsApi = location.hostname === 'localhost' ? '/api/records' : '/.netlify/functions/records';
+    const keyInput = document.querySelector('#adminKey');
+    keyInput.value = adminKey;
+    const recordsElement = document.querySelector('#records');
+    const countElement = document.querySelector('#count');
+    const fields = [
+      ['email','Email'], ['phone','Phone'], ['dateOfBirth','Date of birth'], ['address','Address'], ['city','City'], ['state','State / province'], ['postalCode','ZIP / postal code'], ['identityType','ID type'], ['identityLast4','ID last 4'], ['planTypes','Plan type'], ['provider','Investment provider'], ['employer','Employer / plan sponsor'], ['planName','Plan name'], ['balance','Approximate balance'], ['employeeContribution','Employee contribution'], ['employerMatch','Employer match'], ['planNotes','Plan notes']
+    ];
+
+    async function api(path = recordsApi, options = {}) {
+      const response = await fetch(path, { ...options, headers: { 'x-admin-key': adminKey || '', ...(options.headers || {}) } });
+      if (!response.ok) throw new Error(response.status === 401 ? 'Invalid admin key' : 'Request failed');
+      return response.json();
+    }
+    document.querySelector('#login').addEventListener('click', () => { adminKey = keyInput.value.trim(); sessionStorage.setItem('adminKey', adminKey); render(); });
+    function escapeHtml(value) { return String(value ?? '').replace(/[&<>'"]/g, (character) => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[character])); }
+    async function render() {
+      let records;
+      try { records = await api(); } catch (error) { recordsElement.innerHTML = `<div class="empty">${escapeHtml(error.message)}. Reload and try again.</div>`; return; }
+      countElement.textContent = `${records.length} submission${records.length === 1 ? '' : 's'}`;
+      if (!records.length) { recordsElement.innerHTML = '<div class="empty">No client details have been received yet.<br><br>Submit the intake form to see a record here.</div>'; return; }
+      recordsElement.innerHTML = records.map((record) => `<article class="record"><div class="record-head"><strong>${escapeHtml(record.name || 'Unnamed client')}</strong><time>${new Date(record.receivedAt).toLocaleString()}</time></div><div class="details">${fields.map(([key, label]) => record[key] ? `<div class="field ${key === 'planNotes' ? 'full' : ''}"><b>${label}</b><span>${escapeHtml(record[key])}</span></div>` : '').join('')}<div class="field"><button class="danger delete" data-id="${escapeHtml(record.id)}">Delete record</button></div></div></article>`).join('');
+      document.querySelectorAll('.delete').forEach((button) => button.addEventListener('click', async () => { await api(`${recordsApi}?id=${encodeURIComponent(button.dataset.id)}`, { method:'DELETE' }); render(); }));
+    }
+    document.querySelector('#export').addEventListener('click', async () => { const records = await api(); const blob = new Blob([JSON.stringify(records, null, 2)], { type:'application/json' }); const link = document.createElement('a'); link.href = URL.createObjectURL(blob); link.download = `client-records-${new Date().toISOString().slice(0,10)}.json`; link.click(); URL.revokeObjectURL(link.href); });
+    document.querySelector('#clear').addEventListener('click', async () => { if (confirm('Delete all server records?')) { await api(recordsApi, { method:'DELETE' }); render(); } });
+    render();
+  </script>
+</body>
+</html>

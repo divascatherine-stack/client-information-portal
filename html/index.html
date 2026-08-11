@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Client Information Form</title>
+  <style>
+    :root { --ink:#1d2935; --muted:#687784; --line:#d9e1e6; --brand:#166b68; --brand-dark:#0e514f; --bg:#f3f7f7; }
+    * { box-sizing:border-box; }
+    body { margin:0; background:var(--bg); color:var(--ink); font-family:Arial, sans-serif; }
+    .wrap { width:min(760px, calc(100% - 32px)); margin:0 auto; padding:42px 0 60px; }
+    .intro { margin-bottom:24px; }
+    .tag { color:var(--brand); font-size:.75rem; font-weight:700; letter-spacing:.12em; text-transform:uppercase; }
+    h1 { font-size:clamp(2rem, 5vw, 3rem); letter-spacing:-.04em; margin:10px 0; }
+    .intro p { color:var(--muted); line-height:1.6; margin:0; }
+    form { background:#fff; border:1px solid var(--line); border-radius:16px; box-shadow:0 15px 45px #1d29351a; padding:clamp(22px, 5vw, 40px); }
+    section { border-bottom:1px solid var(--line); margin-bottom:28px; padding-bottom:28px; }
+    section:last-of-type { border:0; margin-bottom:0; padding-bottom:0; }
+    h2 { font-size:1.3rem; margin:0 0 7px; }
+    .help { color:var(--muted); font-size:.9rem; line-height:1.5; margin:0 0 20px; }
+    .grid { display:grid; gap:16px; grid-template-columns:1fr 1fr; }
+    .full { grid-column:1 / -1; }
+    label { color:#344550; display:block; font-size:.84rem; font-weight:700; }
+    input, select, textarea { border:1px solid #c9d4da; border-radius:8px; color:var(--ink); display:block; font:inherit; font-size:.95rem; margin-top:7px; padding:12px; width:100%; }
+    input:focus, select:focus, textarea:focus { border-color:var(--brand); box-shadow:0 0 0 3px #166b6820; outline:0; }
+    textarea { min-height:90px; resize:vertical; }
+    .required { color:#b33d3d; }
+    .choices { display:flex; flex-wrap:wrap; gap:9px; margin-top:10px; }
+    .choice { align-items:center; background:#f5f8f8; border:1px solid var(--line); border-radius:8px; cursor:pointer; display:flex; gap:8px; padding:11px 12px; }
+    .choice input { accent-color:var(--brand); margin:0; width:auto; }
+    .privacy { background:#fff8e8; border-left:4px solid #d99b35; color:#644d26; font-size:.82rem; line-height:1.5; margin-top:18px; padding:12px 14px; }
+    .bottom { align-items:center; display:flex; gap:16px; justify-content:space-between; margin-top:28px; }
+    .bottom small { color:var(--muted); line-height:1.45; }
+    button { background:var(--brand); border:0; border-radius:8px; color:#fff; cursor:pointer; font:inherit; font-weight:700; padding:14px 20px; white-space:nowrap; }
+    button:hover { background:var(--brand-dark); }
+    button:disabled { cursor:wait; opacity:.7; }
+    .message { border-radius:8px; display:none; font-size:.9rem; line-height:1.5; margin-top:18px; padding:13px 14px; }
+    .message.show { display:block; }
+    .message.ok { background:#e8f6f3; border:1px solid #9acfc5; color:var(--brand-dark); }
+    .message.error { background:#fff0f0; border:1px solid #e3aaaa; color:#873939; }
+    @media (max-width:600px) { .grid { grid-template-columns:1fr; } .full { grid-column:auto; } .bottom { align-items:stretch; flex-direction:column; } button { width:100%; } }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="intro">
+      <div class="tag">Client information</div>
+      <h1>Tell us about you and your retirement plan</h1>
+      <p>Complete the details below so your records can be reviewed. Approximate plan amounts are fine.</p>
+    </div>
+
+    <form id="clientForm">
+      <section>
+        <h2>Personal details</h2>
+        <p class="help">Use the name and contact information associated with your records.</p>
+        <div class="grid">
+          <label>Full name <span class="required">*</span><input name="name" autocomplete="name" required placeholder="First and last name"></label>
+          <label>Email address <span class="required">*</span><input name="email" type="email" autocomplete="email" required placeholder="you@example.com"></label>
+          <label>Phone number<input name="phone" type="tel" autocomplete="tel" placeholder="(555) 555-5555"></label>
+          <label>Date of birth<input name="dateOfBirth" type="date" autocomplete="bday"></label>
+          <label class="full">Street address<input name="address" autocomplete="street-address" placeholder="Street and apartment number"></label>
+          <label>City<input name="city" autocomplete="address-level2"></label>
+          <label>State / province<input name="state" autocomplete="address-level1"></label>
+          <label>ZIP / postal code<input name="postalCode" autocomplete="postal-code"></label>
+          <label>Identity document type<select name="identityType"><option value="">Select one</option><option>Driver license</option><option>Passport</option><option>State ID</option><option>Other government ID</option></select></label>
+          <label>Identity document last 4 characters<input name="identityLast4" inputmode="text" maxlength="4" placeholder="Last 4 only"></label>
+        </div>
+        <div class="privacy">For safety, do not enter a Social Security number, full ID number, password, PIN, or full account number. Share official documents only through a secure approved channel.</div>
+      </section>
+
+      <section>
+        <h2>Retirement plan details</h2>
+        <p class="help">Select the plan types you have and provide the available plan information.</p>
+        <label>Retirement plan type <span class="required">*</span></label>
+        <div class="choices">
+          <label class="choice"><input type="checkbox" name="planType" value="401(k)"> 401(k)</label>
+          <label class="choice"><input type="checkbox" name="planType" value="403(b)"> 403(b)</label>
+          <label class="choice"><input type="checkbox" name="planType" value="IRA"> IRA</label>
+          <label class="choice"><input type="checkbox" name="planType" value="Roth IRA"> Roth IRA</label>
+          <label class="choice"><input type="checkbox" name="planType" value="pension"> Pension</label>
+          <label class="choice"><input type="checkbox" name="planType" value="other"> Other</label>
+        </div>
+        <div class="grid" style="margin-top:18px">
+          <label>Investment organization / provider <span class="required">*</span><input name="provider" required placeholder="Fidelity, Vanguard, Empower, etc."></label>
+          <label>Employer or plan sponsor<input name="employer" placeholder="Company or organization name"></label>
+          <label>Plan name or account nickname<input name="planName" placeholder="Do not enter the full account number"></label>
+          <label>Approximate current balance<input name="balance" type="number" min="0" step="0.01" placeholder="0.00"></label>
+          <label>Employee contribution<input name="employeeContribution" placeholder="e.g. 6% or $300 per pay period"></label>
+          <label>Employer match<input name="employerMatch" placeholder="e.g. 50% up to 6%"></label>
+          <label class="full">Retirement plan notes<textarea name="planNotes" placeholder="Anything else about the plan, beneficiaries, rollovers, or upcoming changes..."></textarea></label>
+        </div>
+      </section>
+
+      <div class="bottom"><small>Your submission will be saved locally for review in the board dashboard.</small><button type="submit">Submit details</button></div>
+      <div id="message" class="message" role="status"></div>
+    </form>
+  </div>
+
+  <script>
+    const form = document.querySelector('#clientForm');
+    const message = document.querySelector('#message');
+    const recordsApi = location.hostname === 'localhost' ? '/api/records' : '/.netlify/functions/records';
+
+    async function saveForAdmin() {
+      const record = Object.fromEntries(new FormData(form).entries());
+      record.planTypes = [...form.querySelectorAll('input[name="planType"]:checked')].map((item) => item.value).join(', ');
+      const response = await fetch(recordsApi, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(record)
+      });
+      if (!response.ok) {
+        const details = await response.json().catch(() => ({}));
+        throw new Error(details.error || `Server returned ${response.status}`);
+      }
+    }
+
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      if (!form.checkValidity()) { form.reportValidity(); return; }
+      if (!form.querySelector('input[name="planType"]:checked')) {
+        message.textContent = 'Select at least one retirement plan type before sending.';
+        message.className = 'message error show';
+        return;
+      }
+      const button = form.querySelector('button');
+      button.disabled = true;
+      button.textContent = 'Sending...';
+      message.className = 'message';
+      try {
+        await saveForAdmin();
+        message.textContent = 'The details were saved for admin review.';
+        message.className = 'message ok show';
+      } catch (error) {
+        message.textContent = `The details could not be saved: ${error.message}. Confirm the Netlify Function is deployed, then try again.`;
+        message.className = 'message error show';
+      } finally {
+        button.disabled = false;
+        button.textContent = 'Submit details';
+      }
+    });
+  </script>
+</body>
+</html>
