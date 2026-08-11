@@ -5,8 +5,14 @@ const store = getStore('client-information-records');
 const adminKey = process.env.ADMIN_KEY;
 const headers = { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' };
 
+function methodOf(event) {
+  return event instanceof Request ? event.method : event.httpMethod;
+}
+function headerOf(event, name) {
+  return event instanceof Request ? event.headers.get(name) : event.headers?.[name.toLowerCase()];
+}
 function authorized(event) {
-  return Boolean(adminKey && event.headers['x-admin-key'] === adminKey);
+  return Boolean(adminKey && headerOf(event, 'x-admin-key') === adminKey);
 }
 async function readRecords() {
   return (await store.get('records', { type: 'json' })) || [];
@@ -17,8 +23,9 @@ function response(statusCode, body) {
 
 export default async (event) => {
   try {
-    if (event.httpMethod === 'POST') {
-      const record = JSON.parse(event.body || '{}');
+    const method = methodOf(event);
+    if (method === 'POST') {
+      const record = event instanceof Request ? await event.json() : JSON.parse(event.body || '{}');
       if (!record.name || !record.email || !record.provider || !record.planTypes) return response(400, { error: 'Required fields are missing' });
       const records = await readRecords();
       records.unshift({ ...record, id: crypto.randomUUID(), receivedAt: new Date().toISOString() });
@@ -26,9 +33,10 @@ export default async (event) => {
       return response(201, { ok: true });
     }
     if (!authorized(event)) return response(401, { error: 'Admin authorization required' });
-    if (event.httpMethod === 'GET') return response(200, await readRecords());
-    if (event.httpMethod === 'DELETE') {
-      const id = event.queryStringParameters?.id;
+    if (method === 'GET') return response(200, await readRecords());
+    if (method === 'DELETE') {
+      const url = event instanceof Request ? new URL(event.url) : null;
+      const id = url?.searchParams.get('id') || event.queryStringParameters?.id;
       const records = await readRecords();
       await store.setJSON('records', id ? records.filter((record) => record.id !== id) : []);
       return response(200, { ok: true });
